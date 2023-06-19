@@ -1,6 +1,8 @@
 import express from 'express';
-import { registerController, loginController, dummyController, movieController } from '../controller/autcontroller.js';
+import { registerController, usermovies,  verifiy, loginController, dummyController, movieController, moviesSender, add, remove} from '../controller/autController.js';
+
 import { isAdmin, signInRequire } from '../Middleware/middleWare.js';
+
 
 // creating Router Object
 const router = express.Router();
@@ -19,6 +21,15 @@ router.post("/entermovie", movieController)
 // Method GET / Route dummy
 router.get("/dummy", signInRequire, isAdmin, dummyController)
 
+router.get("/sendmovies", moviesSender)
+
+router.put("/add", add)
+
+router.put("/remove", remove)
+
+router.get("/verify", verifiy)
+
+router.post("/usermovies", usermovies)
 
 export default router;
 

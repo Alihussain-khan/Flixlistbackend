@@ -3,6 +3,8 @@ import userModel from "../model/userModel.js";
 import movieSchema from "../model/moviesModel.js"
 import JWT from 'jsonwebtoken'
 import moviesModel from "../model/moviesModel.js";
+import { json } from "express";
+import mongoose from "mongoose";
 
 
 export const registerController = async(req,res) =>{    
@@ -13,16 +15,23 @@ export const registerController = async(req,res) =>{
         }
 
         // checking whether user record is already available or not ?
+        const existingUser1 = await userModel.findOne({phone})
+        if(existingUser1){
+            return res.status(200).send({
+                success: false,
+                message: "change phone number"
+            })
+        }
         const existingUser = await userModel.findOne({email})
         if(existingUser){
             return res.status(200).send({
-                success: true,
+                success: false,
                 message: "user already exists"
             })
         }
         // replacing original password with hashed password in DB
         let updatedPassword = await hashPassword(password)
-        const user = await new userModel({name, phone, address, email, password:updatedPassword}).save();
+        const user = await new userModel({name, phone, address, email, password:updatedPassword, movies:[]}).save();
 
         res.status(201).send({
             success: true,
@@ -69,7 +78,7 @@ export const loginController = async(req,res) => {
         }
 
         // if email and password is correct, return jwt token
-        const token = JWT.sign({_id: user._id}, process.env.JWT_Key,{expiresIn: '7d'})
+        const token = JWT.sign({_id: user._id}, "skahsdkjashdashld",{expiresIn: '7d'})
 
         res.status(200).send({
             success: true,
@@ -104,8 +113,8 @@ export const dummyController = (req,res) =>{
 
 export const movieController = async(req,res) =>{    
     try {
-        const {id, title, image, imbd, director, writers, description} = req.body;
-        if(!id || !title || !image || !imbd || !director || !writers || !description){
+        const {id, title, image, imbd, director, writers,category, description} = req.body;
+        if(!id || !title || !image || !imbd || !director || !writers || !description || !category){
             return res.send({message: "Fields cannot be empty"})
         }
 
@@ -117,7 +126,7 @@ export const movieController = async(req,res) =>{
                 message: "Movie already exists"
             })
         }
-        const user = await new moviesModel({id, title, image, imbd, director, writers, description}).save();
+        const user = await new moviesModel({id, title, image, imbd, director, writers, category, description}).save();
 
         res.status(201).send({
             success: true,
@@ -135,4 +144,103 @@ export const movieController = async(req,res) =>{
 
     }
 
+}
+
+
+// sending Movies back
+export const moviesSender = async (req,res) =>{
+    
+try {
+    const mdata = await movieSchema.find()
+       res.send(mdata)
+} catch (error) {
+    console.log(error)
+}
+
+
+       
+}
+
+
+// adding Movies back
+export const add = async (req,res) =>{
+    const {id, email} = req.body;
+    console.log(id, email)
+       let updateuser = await userModel.updateOne(
+        {email},
+        {$push: {movies:id}}
+    )
+    // res.status(201).send({
+    //     success: true,
+    //     message: "Movie created successfully",
+        
+    // })
+    res.send(updateuser)      
+}
+
+// removing the movie
+export const remove = async (req,res) =>{
+    const {id, email} = req.body;
+       let updateuser = await userModel.updateOne(
+        {email},
+        {$pull: {movies:id}}
+    )
+    res.send(updateuser)      
+}
+
+
+// 
+export const usermovies = async (req,res) =>{
+    const {email} = req.body;
+    console.log(email)
+    const existingUser = await userModel.findOne({email})
+    console.log(existingUser)
+    if(existingUser && existingUser?.movies?.length){
+        const moviesList = await Promise.all(
+            existingUser.movies.map(async (movieId) => {
+              const movie = await moviesModel.findById(movieId);
+              return movie;
+            })
+          );
+        console.log(`moviesList = ${JSON.stringify(moviesList?.length)}`)
+        console.log(`moviesList = ${JSON.stringify(moviesList)}`)
+        res.send(moviesList)
+    }
+    else(
+        res.status(200).send({
+            success:false,
+            message: "cant find user"
+        })
+    )     
+}
+
+
+export const verifiy = async (req,res) =>{
+    try{
+        const decode = await JWT.verify(req.headers.authorization, "skahsdkjashdashld")
+        res.status(200).send({
+            success: true,
+            message: "success"
+        })
+        // res.status(401).send({
+        //     success:false,
+        //     message: "invalid token"
+        // })
+}
+    catch(e){
+        res.status(401).send({
+            success:false,
+            message: "invalid token"
+        })
+    }
+    
+         
+}
+
+
+// sending Movies back
+export const getUserMovie = async (req,res) =>{
+    const {email} = req.body;
+    const existingUser = await userModel.findOne({email})
+    res.send(existingUser)      
 }

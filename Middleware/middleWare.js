@@ -1,4 +1,4 @@
-import JWT from 'jsonwebtoken'
+    import JWT from 'jsonwebtoken'
 import userModel from '../model/userModel.js';
 
 // creating middleware for protection on the basis of token
