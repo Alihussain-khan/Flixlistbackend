@@ -22,6 +22,6 @@ app.use("/api/v1/auth",authRouter)
 
 
 
-app.listen(process.env.PORT, ()=>{
+app.listen(process.env.PORT || 6010, ()=>{
     console.log("server started")
 })
