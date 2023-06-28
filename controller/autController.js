@@ -165,17 +165,30 @@ try {
 // adding Movies back
 export const add = async (req,res) =>{
     const {id, email} = req.body;
-    console.log(id, email)
-       let updateuser = await userModel.updateOne(
-        {email},
-        {$push: {movies:id}}
-    )
-    // res.status(201).send({
-    //     success: true,
-    //     message: "Movie created successfully",
-        
-    // })
-    res.send(updateuser)      
+    const user = await userModel.find({email, movies:id})
+    
+    if(user.length==0)
+    {
+        let updateuser = await userModel.updateOne(
+            {email},
+            {$push: {movies:id}}
+        )
+        res.status(201).send({
+            success: true,
+            message: "Movie added",
+            updateuser
+            
+        })
+       
+
+    }
+    else{
+    res.status(201).send({
+        success: true,
+        message: "Movie Already exists",
+    })
+}
+         
 }
 
 // removing the movie
